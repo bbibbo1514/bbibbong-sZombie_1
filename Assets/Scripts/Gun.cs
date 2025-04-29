@@ -32,10 +32,27 @@ public class Gun : MonoBehaviour {
 
     private void Awake() {
         // 사용할 컴포넌트의 참조 가져오기
+        gunAudioPlayer = GetComponent<AudioSource>();
+        bulletLineRenderer = GetComponent<LineRenderer>();
+
+        // 사용할 점을 두 개로 변경
+        bulletLineRenderer.positionCount = 2;
+        // 라인 렌더러를 비활성화
+        bulletLineRenderer.enabled = false;    
     }
 
     private void OnEnable() {
-        // 총 상태 초기화
+        // 전체 예비 탄알 양을 초기화
+        ammoRemain = gunData.startAmmoRemain;
+
+        // 현재 탄창을 가득 채우기
+        magAmmo = gunData.magCapacity;
+
+        // 총의 상태를 발사 준비 상태로 변경
+        state = State.Ready;
+        // 마지막으로 총을 쏜 시점을 초기화
+        lastFireTime = 0;
+
     }
 
     // 발사 시도
