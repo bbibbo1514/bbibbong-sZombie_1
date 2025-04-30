@@ -57,6 +57,14 @@ public class Gun : MonoBehaviour {
 
     // 발사 시도
     public void Fire() {
+        if (state == State.Ready && Time.time >= lastFireTime + gunData.timeBetFire) {
+            // 발사 시도
+            lastFireTime = Time.time; // 마지막 발사 시점 갱신
+            Shot();
+        } else if (state == State.Empty) {
+            // 재장전 시도
+            Reload();
+        }
 
     }
 
@@ -67,7 +75,13 @@ public class Gun : MonoBehaviour {
 
     // 발사 이펙트와 소리를 재생하고 탄알 궤적을 그림
     private IEnumerator ShotEffect(Vector3 hitPosition) {
+
+        muzzleFlashEffect.Play(); // 총구 화염 효과 재생
+        shellEjectEffect.Play(); // 탄피 배출 효과 재생
+        gunAudioPlayer.PlayOneShot(gunData.shotClip); // 총 소리 재생
         // 라인 렌더러를 활성화하여 탄알 궤적을 그림
+        bulletLineRenderer.SetPosition(0, fireTransform.position); // 발사 위치 설정
+        bulletLineRenderer.SetPosition(1, hitPosition); // 발사 방향 설정
         bulletLineRenderer.enabled = true;
 
         // 0.03초 동안 잠시 처리를 대기
