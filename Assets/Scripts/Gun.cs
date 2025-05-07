@@ -69,8 +69,36 @@ public class Gun : MonoBehaviour {
     }
 
     // 실제 발사 처리
-    private void Shot() {
-      
+    private void Shot() 
+    {
+        RaycastHit hit;
+        Vector3 hitPosition = Vector3.zero; // 발사한 총알이 맞은 위치
+        if(Physics.Raycast(fireTransform.position, fireTransform.forward, out hit, fireDistance)) 
+        {
+            IDamageable target = hit.collider.GetComponent<IDamageable>(); // 충돌한 오브젝트의 IDamageable 인터페이스를 가져옴
+            if (target != null) 
+            {
+                target.OnDamage(gunData.damage, hit.point, hit.normal);
+            }
+            hitPosition = hit.point;
+        }
+        else 
+        {
+            // 레이가 다른 물체와 충돌하지 않았다면
+            // 탄알이 최대 사정거리까지 날아갔을 때의 위치를 충돌 위치로 사용
+            hitPosition = fireTransform.position + fireTransform.forward * fireDistance;
+        }
+        // 발사 이펙트 재생 시작
+        StartCoroutine(ShotEffect(hitPosition));
+
+        // 남은 탄환 수를 -1
+        magAmmo--;
+        // 탄환이 0이 되면 총의 상태를 Empty로 변경
+        if (magAmmo <= 0) 
+        {
+            state = State.Empty; // 총의 상태를 Empty로 변경         
+        }
+          
     }
 
     // 발사 이펙트와 소리를 재생하고 탄알 궤적을 그림
@@ -100,9 +128,25 @@ public class Gun : MonoBehaviour {
     private IEnumerator ReloadRoutine() {
         // 현재 상태를 재장전 중 상태로 전환
         state = State.Reloading;
-      
+
+        // 재장전 소리 재생
+        gunAudioPlayer.PlayOneShot(gunData.reloadClip);
+
         // 재장전 소요 시간 만큼 처리 쉬기
         yield return new WaitForSeconds(gunData.reloadTime);
+
+        // 탄창에 채울 탄알 계산
+        int ammoToFill = gunData.magCapacity - magAmmo; // 채울 탄알 수
+
+        // 탄창에 채워야 할 탄알이 남은 탄알보다 많다면
+        // 채워야 할 탄알 수를 남은 탄알 수에 맞춰 줄임
+        if (ammoToFill > ammoRemain) {
+            ammoToFill = ammoRemain;
+        }
+
+        // 탄창을 채움
+        magAmmo += ammoToFill;
+        // 남은 탄알에서 탄창에 채운만큼 탄알을  뺌
 
         // 총의 현재 상태를 발사 준비된 상태로 변경
         state = State.Ready;
